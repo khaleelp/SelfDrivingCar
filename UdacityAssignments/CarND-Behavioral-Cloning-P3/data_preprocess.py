@@ -20,17 +20,20 @@ with open(csv_path) as csv_file:
     reader = csv.DictReader(csv_file)
     for current_row in reader:
         #center image
-        center_image = plt.imread("data/"+current_row['center'].strip())
-        center_image = cv2.resize(center_image, (custom_cols, custom_rows))
-        center_images.append(np.reshape(center_image, (1, custom_rows, custom_cols, channels)))
+        center_images.append(current_row['center'].strip())
+        #center_images.append(plt.imread("data/"+current_row['center'].strip()))
+        #center_image = cv2.resize(center_image, (custom_cols, custom_rows))
+        #center_images.append(np.reshape(center_image, (1, custom_rows, custom_cols, channels)))
         #left image
-        left_image = plt.imread("data/" + current_row['left'].strip())
-        left_image = cv2.resize(left_image, (custom_cols, custom_rows))
-        left_images.append(np.reshape(left_image, (1, custom_rows, custom_cols, channels)))
+        left_images.append(current_row['left'].strip())
+        #left_images.append(plt.imread("data/" + current_row['left'].strip()))
+        #left_image = cv2.resize(left_image, (custom_cols, custom_rows))
+        #left_images.append(np.reshape(left_image, (1, custom_rows, custom_cols, channels)))
         #right image
-        right_image = plt.imread("data/" + current_row['right'].strip())
-        right_image = cv2.resize(right_image, (custom_cols, custom_rows))
-        right_images.append(np.reshape(right_image, (1, custom_rows, custom_cols, channels)))
+        right_images.append(current_row['right'].strip())
+        #right_images.append(plt.imread("data/" + current_row['right'].strip()))
+        #right_image = cv2.resize(right_image, (custom_cols, custom_rows))
+        #right_images.append(np.reshape(right_image, (1, custom_rows, custom_cols, channels)))
         #steering angles
         steering_angles.append(float(current_row['steering'].strip()))
 
@@ -38,7 +41,6 @@ print("data size left:", len(left_images))
 print("data size center:", len(center_images))
 print("data size right:", len(right_images))
 print("data size steering angles:", len(steering_angles))
-
 
 def balance_data(center_images, left_images, right_images, steering_angles):
     data_length = len(center_images)
@@ -58,7 +60,6 @@ def balance_data(center_images, left_images, right_images, steering_angles):
     remove_indices = np.random.choice(zero_angles_count, angles_to_remove, replace=False)
 
     print("angles to remove:", angles_to_remove)
-    print("removed indices count:", remove_indices)
 
     #TODO: issue with removing data from center images. fix this later
     driving_data = dict()
@@ -77,8 +78,9 @@ def balance_data(center_images, left_images, right_images, steering_angles):
 
 driving_data = balance_data(center_images, left_images, right_images, steering_angles)
 
+print(driving_data['center_images'][0])
 with open('data/driving_data.p', mode='wb') as f:
-	pickle.dump(driving_data, f)
+    pickle.dump(driving_data, f)
 
 
 
