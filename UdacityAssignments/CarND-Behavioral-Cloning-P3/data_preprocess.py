@@ -5,10 +5,12 @@ import sys
 import pickle
 import cv2
 import numpy as np
+import random
 
 import matplotlib.pyplot as plt
 
 csv_path = "data/driving_log.csv"
+#csv_path = "/Users/khaleel.pasha/Desktop/driving_log.csv"
 left_images, center_images, right_images, steering_angles = [],[],[],[]
 
 channels, row, col = 3, 160, 320  # camera format
@@ -36,11 +38,6 @@ with open(csv_path) as csv_file:
         #right_images.append(np.reshape(right_image, (1, custom_rows, custom_cols, channels)))
         #steering angles
         steering_angles.append(float(current_row['steering'].strip()))
-
-print("data size left:", len(left_images))
-print("data size center:", len(center_images))
-print("data size right:", len(right_images))
-print("data size steering angles:", len(steering_angles))
 
 def balance_data(center_images, left_images, right_images, steering_angles):
     data_length = len(center_images)
@@ -76,9 +73,16 @@ def balance_data(center_images, left_images, right_images, steering_angles):
 
     return driving_data
 
-driving_data = balance_data(center_images, left_images, right_images, steering_angles)
+def balance_data1(center_images, left_images, right_images, steering_angles):
+    driving_data = dict()
+    driving_data['center_images'] = center_images
+    driving_data['left_images'] = left_images
+    driving_data['right_images'] = right_images
+    driving_data['labels'] = steering_angles
+    return driving_data
 
-print(driving_data['center_images'][0])
+driving_data = balance_data1(center_images, left_images, right_images, steering_angles)
+
 with open('data/driving_data.p', mode='wb') as f:
     pickle.dump(driving_data, f)
 
