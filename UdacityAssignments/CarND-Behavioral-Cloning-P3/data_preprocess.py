@@ -35,7 +35,7 @@ with open(csv_path) as csv_file:
 
 
 def balance_data(center_images, left_images, right_images, steering_angles):
-    zero_nonzero_ratio = 0.9
+    zero_nonzero_ratio = 0.7
     data_length = len(center_images)
     zero_angles_count = []
     for index, label in enumerate(steering_angles):
@@ -136,7 +136,7 @@ def balance_data2(center_images, left_images, right_images, steering_angles):
     print("total rows :", len(center_images))
     return driving_data
 
-driving_data = balance_data2(center_images, left_images, right_images, steering_angles)
+driving_data = balance_data1(center_images, left_images, right_images, steering_angles)
 
 with open('data/driving_data.p', mode='wb') as f:
     pickle.dump(driving_data, f)

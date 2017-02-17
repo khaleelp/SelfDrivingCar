@@ -47,12 +47,12 @@ def telemetry(sid, data):
         image_array = np.asarray(image)
 
         #Changing images dimensions similar to trained camera images
-        image_array = image_array[20:140, 50:270]
-        #image_array = (image_array - 128.0) / 128.0
+        #image_array = image_array[20:140, 50:270]
+        image_array = cut_image(image_array)
         image_array = cv2.resize(image_array, (200, 66))
 
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
-        throttle = 0.20 #modified
+        throttle = 0.25 #modified
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
