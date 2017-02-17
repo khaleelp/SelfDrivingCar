@@ -22,6 +22,8 @@ from keras.models import Sequential, Model
 from keras.layers.core import Dense, Dropout, Activation, Lambda
 from keras.layers import Convolution2D, MaxPooling2D, Flatten, ELU
 
+from keras.regularizers import l2
+
 from sklearn.utils import shuffle
 
 #ch, row, col = 3, 160, 320
@@ -110,20 +112,21 @@ def augment_image(image, angle):
     # image, angle = brightness_image(np.copy(image),angle)
 
     # Data normalization
-    image = (image - 128.0) / 128.0
+    #image = (image - 128.0) / 128.0
 
     return image, angle
 
 
-def get_image(center_images, left_images, right_images, labels, index, image_offset=0.25):
+def get_image(center_images, left_images, right_images, labels, index, image_offset=0.20):
+
     camera = np.random.choice(['center', 'left', 'right'])
 
     if camera == 'center':
-        image, steering = plt.imread(center_images[index]), float(labels[index])
+        image, steering = plt.imread("data/"+center_images[index]), float(labels[index])
     elif camera == 'left':
-        image, steering = plt.imread(left_images[index]), float(labels[index]) + image_offset
+        image, steering = plt.imread("data/"+left_images[index]), float(labels[index]) + image_offset
     elif camera == 'right':
-        image, steering = plt.imread(right_images[index]), float(labels[index]) - image_offset
+        image, steering = plt.imread("data/"+right_images[index]), float(labels[index]) - image_offset
 
     # Augment image
     image, angle = augment_image(image, steering)
@@ -174,8 +177,8 @@ def nvidia_model(time_len=1):
     model.add(Lambda(lambda x: x / 127.5 - 1.,
                      input_shape=(rows, columns, channels),
                      output_shape=(rows, columns, channels)))
-    model.add(Convolution2D(24, 5, 5, subsample=(2, 2), border_mode="valid", init=INIT))
-    # W_regularizer=l2(reg_val)
+    model.add(Convolution2D(24, 5, 5, subsample=(2, 2), border_mode="valid", init=INIT, W_regularizer=l2(reg_val)))
+
     model.add(ELU())
     model.add(Dropout(keep_prob))
 
@@ -217,7 +220,7 @@ def nvidia_model(time_len=1):
 
 # Train the model
 batch_size = 64
-EPOCHS = 8
+EPOCHS = 20
 
 model = nvidia_model()
 #model.summary()
