@@ -58,7 +58,7 @@ def balance_data(center_images, left_images, right_images, steering_angles):
     print("non_zero_angles :", non_zero_angles_count)
 
     new_zero_angles_count = int(non_zero_angles_count * zero_nonzero_ratio)
-    angles_to_remove = data_length - new_zero_angles_count - non_zero_angles_count
+    angles_to_remove = int(data_length - new_zero_angles_count - non_zero_angles_count)
 
     # Randomly remove excess zero angle images
     remove_indices = np.random.choice(zero_angles_count, angles_to_remove, replace=False)
@@ -113,8 +113,9 @@ def balance_data1(center_images, left_images, right_images, steering_angles):
     print("zero angles :", len(zero_angles_count))
     print("non_zero_angles :", non_zero_angles_count)
 
-    new_zero_angles_count = int(non_zero_angles_count * zero_nonzero_ratio)
-    angles_to_remove = data_length - new_zero_angles_count - non_zero_angles_count
+    #new_zero_angles_count = int(non_zero_angles_count * zero_nonzero_ratio)
+    #angles_to_remove = data_length - new_zero_angles_count - non_zero_angles_count
+    angles_to_remove = len(zero_angles_count) * 0.2
 
     # Randomly remove excess zero angle images
     remove_indices = np.random.choice(zero_angles_count, angles_to_remove, replace=False)
@@ -147,7 +148,7 @@ def balance_data2(center_images, left_images, right_images, steering_angles):
     print("total rows :", len(center_images))
     return driving_data
 
-driving_data = balance_data2(center_images, left_images, right_images, steering_angles)
+driving_data = balance_data1(center_images, left_images, right_images, steering_angles)
 
 with open('data/driving_data.p', mode='wb') as f:
     pickle.dump(driving_data, f)
