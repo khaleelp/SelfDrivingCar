@@ -33,6 +33,17 @@ with open(csv_path) as csv_file:
         right_images.append(image_right)
         steering_angles.append(steering)
 
+        #TODO: remove later
+        if steering != 0.0:
+            center_images.append(image_center)
+            left_images.append(image_left)
+            right_images.append(image_right)
+            steering_angles.append(steering)
+            center_images.append(image_center)
+            left_images.append(image_left)
+            right_images.append(image_right)
+            steering_angles.append(steering)
+
 
 def balance_data(center_images, left_images, right_images, steering_angles):
     zero_nonzero_ratio = 0.7
@@ -136,7 +147,7 @@ def balance_data2(center_images, left_images, right_images, steering_angles):
     print("total rows :", len(center_images))
     return driving_data
 
-driving_data = balance_data1(center_images, left_images, right_images, steering_angles)
+driving_data = balance_data2(center_images, left_images, right_images, steering_angles)
 
 with open('data/driving_data.p', mode='wb') as f:
     pickle.dump(driving_data, f)
