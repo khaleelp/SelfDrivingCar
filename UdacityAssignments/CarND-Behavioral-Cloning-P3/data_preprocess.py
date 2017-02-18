@@ -115,7 +115,7 @@ def balance_data1(center_images, left_images, right_images, steering_angles):
 
     #new_zero_angles_count = int(non_zero_angles_count * zero_nonzero_ratio)
     #angles_to_remove = data_length - new_zero_angles_count - non_zero_angles_count
-    angles_to_remove = len(zero_angles_count) * 0.2
+    angles_to_remove = int(len(zero_angles_count) * 0.2)
 
     # Randomly remove excess zero angle images
     remove_indices = np.random.choice(zero_angles_count, angles_to_remove, replace=False)
