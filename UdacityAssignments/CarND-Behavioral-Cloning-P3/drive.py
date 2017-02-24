@@ -12,10 +12,8 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
+import random
 import cv2
-import numpy as np
-
-import matplotlib.pyplot as plt
 
 from keras.models import load_model
 
@@ -24,35 +22,53 @@ app = Flask(__name__)
 model = None
 prev_image_array = None
 
-def cut_image(img):
-    rows,cols,channel = img.shape
-    top = int(.4 * rows)
-    botton = int(.85 * rows)
-    border = int(.05 * cols)
-    return img[top:botton, border:cols-border, :]
+
+def region_of_interest(img):
+    height = img.shape[0]
+    width = img.shape[1]
+    vertices = np.array([[(0, height - 15), (0, height / 2 - 10),
+                          (width, height / 2 - 10), (width, height - 15)]],
+                        dtype=np.int32)
+    # defining a blank mask to start with
+    mask = np.zeros_like(img)
+    channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+    ignore_mask_color = (255,) * channel_count
+    # filling pixels inside the polygon defined by \"vertices\" with the fill color
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+
+    # returning the image only where mask pixels are nonzero\n",
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
+
+
+def rezise(img):
+    return cv2.resize(img, (75, 48))
+
+def preprocess_image(img):
+    img = region_of_interest(img)
+    img = rezise(img)
+    return img
 
 
 @sio.on('telemetry')
 def telemetry(sid, data):
     if data:
         # The current steering angle of the car
-        steering_angle = data["steering_angle"]
+        old_steering_angle = float(data["steering_angle"])
         # The current throttle of the car
-        throttle = data["throttle"]
+        old_throttle = float(data["throttle"]) or 1.2
         # The current speed of the car
         speed = float(data["speed"])
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
-
-        #Changing images dimensions similar to trained camera images
-        #image_array = image_array[20:140, 50:270]
-        image_array = cut_image(image_array)
-        image_array = cv2.resize(image_array, (200, 66))
-
+        image_array = preprocess_image(image_array)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
-        throttle = 0.20 #modified
+        #throttle = 0.6 if speed < 21 else 0.2
+        #throttle = 1.8/(1+2*(abs(old_steering_angle - steering_angle)))
+        #throttle = 0.2/(1+(abs(old_steering_angle - steering_angle)/50))
+        throttle = 0.2
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
