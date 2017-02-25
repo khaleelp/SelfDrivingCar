@@ -15,12 +15,13 @@ from keras.regularizers import l2
 """
 UTILITY METHODS TO PRE-PROCESS IMAGES
 """
+#Cut and re-size image
 def img_pre_process(image):
     roi = image[60:140, :, :] #Cut top and bottom of image
     image = cv2.resize(roi, (64,64), interpolation=cv2.INTER_AREA) #reducing image size so that model runs faster
     return image
 
-#Image brigtness method
+#Change image brigtness
 #Credit: https://github.com/mohankarthik/CarND-BehavioralCloning-P3/blob/master/model.py
 def img_change_brightness(img):
     # Convert the image to HSV
@@ -51,9 +52,10 @@ def read_image(image_path):
     return img_pre_process(image)
 
 
-# flipping, to avoid bias to left\right turns
-# brightness, augmentaion to generalize to t2
-# translate, to simulate the car being at the edges of the road and hill-slopes
+#Below method will be used as batch generator by model. Below method also augments data by,
+# flipping: to avoid bias to left\right turns
+# brightness: augmentaion to generalize on second track. not mandatory for first track
+# translate: to simulate the car being at the edges of the road and hill-slopes.
 # translate is done both on normal and flipped images
 def generate_steering_angle(data, batch_size=128):
     X = []
@@ -63,19 +65,23 @@ def generate_steering_angle(data, batch_size=128):
         for line in data:
             image = read_image(line['center'])
             angle = line['angle']
+            #Original image
             image_brightened = img_change_brightness(image)
             X.append(image_brightened)
             Y.append(angle)
 
+            #Flip original image
             flipped_image = cv2.flip(image, 1)
             flipped_image_brightened = img_change_brightness(flipped_image)
             X.append(flipped_image_brightened)
             Y.append(-angle)
 
+            #Translate original image to simulate car at the edge
             translated_image, translated_angle = translate_image(image_brightened, angle)
             X.append(translated_image)
             Y.append(translated_angle)
 
+            #Translate flipped image to simulate car at the edge
             translated_flipped_image, translated_flipped_angle = translate_image(flipped_image_brightened, angle)
             X.append(translated_flipped_image)
             Y.append(translated_flipped_angle)
@@ -87,6 +93,7 @@ def generate_steering_angle(data, batch_size=128):
                 Y = []
 
 
+#Generate validation data
 def generate_validation(data):
     X = []
     Y = []
@@ -101,14 +108,15 @@ def generate_validation(data):
             yield np.array(X), np.array(Y)  # (image, steering angle)
 
 
+#Using pre-trained VGG16 as base model and adding regression layer to predict steering angle
 def create_model():
-    # create the base pre-trained model
+    # LOAD pre-trained VGG16 model
     base_model = VGG16(weights='imagenet', include_top=False, input_shape=[64, 64, 3])
 
     x = base_model.output
     x = Flatten()(x)
 
-    # and a regression layer to predict steering angle
+    # Regression layer
     x = Dense(1000, activation='relu', name='fc1', W_regularizer=l2(0.0001))(x)
     # x = Dropout(0.5)(x)
     x = Dense(250, activation='relu', name='fc2', W_regularizer=l2(0.0001))(x)
@@ -124,10 +132,13 @@ def create_model():
     return model
 
 
+#MAIN
 if __name__ == '__main__':
 
+    # STEP1: Create model
     model = create_model()
 
+    # STEP2: Load training and validation data
     training_pickle = 'data/train.p'
     with open(training_pickle, 'rb') as handle:
         driving_info = pickle.load(handle)
@@ -139,7 +150,7 @@ if __name__ == '__main__':
     print("train size", len(driving_info))
     print("validation size", len(validation_info))
 
-    # train the model on the new data for a few epochs
+    # STEP3: Train the model
     model.fit_generator(
         generate_steering_angle(driving_info, batch_size=32),
         samples_per_epoch=len(driving_info) * 4,
@@ -147,8 +158,7 @@ if __name__ == '__main__':
         validation_data=generate_validation(validation_info),
         nb_val_samples=len(validation_info) / 7)
 
-    '''
-    # Save the model
+    # STEP4: Save the model
     model_json = 'model.json'
     model_weights = 'model.h5'
     json_string = model.to_json()
@@ -162,5 +172,4 @@ if __name__ == '__main__':
         json.dump(json_string, jfile)
     model.save(model_weights)
 
-    print("model saved..")
-    '''
+    print("model saved.")
