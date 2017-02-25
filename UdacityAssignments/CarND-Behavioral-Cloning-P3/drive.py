@@ -1,5 +1,6 @@
 import argparse
 import base64
+import cv2
 from datetime import datetime
 import os
 import shutil
@@ -12,10 +13,9 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
-import random
-import cv2
-
 from keras.models import load_model
+import h5py
+from keras import __version__ as keras_version
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -23,52 +23,54 @@ model = None
 prev_image_array = None
 
 
-def region_of_interest(img):
-    height = img.shape[0]
-    width = img.shape[1]
-    vertices = np.array([[(0, height - 15), (0, height / 2 - 10),
-                          (width, height / 2 - 10), (width, height - 15)]],
-                        dtype=np.int32)
-    # defining a blank mask to start with
-    mask = np.zeros_like(img)
-    channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
-    ignore_mask_color = (255,) * channel_count
-    # filling pixels inside the polygon defined by \"vertices\" with the fill color
-    cv2.fillPoly(mask, vertices, ignore_mask_color)
+class SimplePIController:
+    def __init__(self, Kp, Ki):
+        self.Kp = Kp
+        self.Ki = Ki
+        self.set_point = 0.
+        self.error = 0.
+        self.integral = 0.
 
-    # returning the image only where mask pixels are nonzero\n",
-    masked_image = cv2.bitwise_and(img, mask)
-    return masked_image
+    def set_desired(self, desired):
+        self.set_point = desired
+
+    def update(self, measurement):
+        # proportional error
+        self.error = self.set_point - measurement
+
+        # integral error
+        self.integral += self.error
+
+        return self.Kp * self.error + self.Ki * self.integral
 
 
-def rezise(img):
-    return cv2.resize(img, (75, 48))
+controller = SimplePIController(0.1, 0.002)
+set_speed = 9
+controller.set_desired(set_speed)
 
-def preprocess_image(img):
-    img = region_of_interest(img)
-    img = rezise(img)
-    return img
-
+def img_pre_process(image):
+    roi = image[60:140, :, :] #Cut top and bottom of image
+    image = cv2.resize(roi, (64,64), interpolation=cv2.INTER_AREA) #reducing image size so that model runs faster
+    return image
 
 @sio.on('telemetry')
 def telemetry(sid, data):
     if data:
         # The current steering angle of the car
-        old_steering_angle = float(data["steering_angle"])
+        steering_angle = data["steering_angle"]
         # The current throttle of the car
-        old_throttle = float(data["throttle"]) or 1.2
+        throttle = data["throttle"]
         # The current speed of the car
-        speed = float(data["speed"])
+        speed = data["speed"]
         # The current image from the center camera of the car
         imgString = data["image"]
         image = Image.open(BytesIO(base64.b64decode(imgString)))
         image_array = np.asarray(image)
-        image_array = preprocess_image(image_array)
+        image_array = img_pre_process(image_array)
         steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
-        #throttle = 0.6 if speed < 21 else 0.2
-        #throttle = 1.8/(1+2*(abs(old_steering_angle - steering_angle)))
-        #throttle = 0.2/(1+(abs(old_steering_angle - steering_angle)/50))
-        throttle = 0.2
+
+        throttle = controller.update(float(speed))
+
         print(steering_angle, throttle)
         send_control(steering_angle, throttle)
 
@@ -113,6 +115,15 @@ if __name__ == '__main__':
         help='Path to image folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
+
+    # check that model Keras version is same as local Keras version
+    f = h5py.File(args.model, mode='r')
+    model_version = f.attrs.get('keras_version')
+    keras_version = str(keras_version).encode('utf8')
+
+    if model_version != keras_version:
+        print('You are using Keras version ', keras_version,
+              ', but the model was built using ', model_version)
 
     model = load_model(args.model)
 
