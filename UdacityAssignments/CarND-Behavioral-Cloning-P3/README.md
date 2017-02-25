@@ -76,11 +76,11 @@ and experimentation with different models. <br>
 
 **Batch generator,** method is generate_steering_angle() line number 60. Batch generate is used by model. 
 Batch generator before returning batch(size=32) to model iaugments data by adding few more images to 
-original image. Batch contains following augmentation of original image:
-1. (Original image, angle)
-2. (Flipped image, angle). Flipping is required to remove left and right angle bias
-3. (Translated image, angle). Translated to simulate car at the edges
-4. (Translate flipped image, angle). 
+original image. Batch contains following augmentation of original image: <br/>
+1. (Original image, angle) <br/>
+2. (Flipped image, angle). Flipping is required to remove left and right angle bias <br/>
+3. (Translated image, angle). Translated to simulate car at the edges <br/>
+4. (Translate flipped image, angle). <br/>
 
 Also, I added brightness to all above images but it is not required to run car on track1. That is more
 to generalize the car driving on lane2
@@ -101,15 +101,15 @@ VGG16 Architecture below,
 
 Once image go through base model, I flattened the base model and added following regression layer which
 have 3 dens layers: <br/>
-1. Dense layer with 1000 neurons
-2. Dense layer with 250 neurons
-3. Dense layer for output value.
+1. Dense layer with 1000 neurons. <br/> 
+2. Dense layer with 250 neurons. <br/>
+3. Dense layer for output value. <br/>
 
 Also I used following in the model, <br/>
-1. Relu as activation
-2. L2 regularization with 0.0001 in regression layer, to prevent overfitting
-3. Dropout with 0.5 in regression layer, regularization to prevent overfitting
-4. Adam optimizer in model
+1. Relu as activation <br/>
+2. L2 regularization with 0.0001 in regression layer, to prevent overfitting <br/>
+3. Dropout with 0.5 in regression layer, regularization to prevent overfitting <br/>
+4. Adam optimizer in model <br/>
 
 **EPOCHS:** <br/>
 Model used 5 epochs. I tried with epochs raning from 4 to 50. More epochs made car more
