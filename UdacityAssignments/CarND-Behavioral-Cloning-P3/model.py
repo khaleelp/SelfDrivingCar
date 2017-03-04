@@ -22,7 +22,6 @@ def img_pre_process(image):
     return image
 
 #Change image brigtness
-#Credit: https://github.com/mohankarthik/CarND-BehavioralCloning-P3/blob/master/model.py
 def img_change_brightness(img):
     # Convert the image to HSV
     temp = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
