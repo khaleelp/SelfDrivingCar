@@ -24,7 +24,8 @@ Steps for vehicle detection are as follow:
     4. Run pipeline on video
        Run the above pipleine for every frame of video.
 
-You can see all details in vehicle_detection.ipynb
-Final output of test video is submitted as P5.mp4
+You can see all details in vehicle_detection.ipynb <br/>
 
-Images after each step are plotted inline.
+Final output of test video is submitted as P5.mp4 <br/>
+
+Images after each step are plotted inline. <br/>
